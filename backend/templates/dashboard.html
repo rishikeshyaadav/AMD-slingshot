@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMD Sentry | Command Center</title>
+    <style>
+        body { background-color: #0d1117; color: #c9d1d9; font-family: 'Courier New', monospace; padding: 20px; }
+        h1 { color: #58a6ff; text-align: center; border-bottom: 1px solid #30363d; padding-bottom: 10px; }
+        .stats-container { display: flex; justify-content: space-around; margin-bottom: 20px; }
+        .stat-box { background: #161b22; padding: 15px; border-radius: 6px; border: 1px solid #30363d; width: 30%; text-align: center; }
+        .stat-number { font-size: 2em; font-weight: bold; }
+        .stat-label { color: #8b949e; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #30363d; padding: 12px; text-align: left; }
+        th { background-color: #161b22; color: #58a6ff; }
+        tr:nth-child(even) { background-color: #0d1117; }
+        tr:nth-child(odd) { background-color: #161b22; }
+        
+        .badge { padding: 5px 10px; border-radius: 4px; font-weight: bold; }
+        .real { background-color: #238636; color: white; }
+        .fake { background-color: #da3633; color: white; }
+        .img-preview { height: 50px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <h1>AMD SENTRY /// LIVE THREAT MONITOR</h1>
+
+    <div class="stats-container">
+        <div class="stat-box">
+            <div id="total-scanned" class="stat-number">0</div>
+            <div class="stat-label">Images Scanned</div>
+        </div>
+        <div class="stat-box">
+            <div id="threats-found" class="stat-number" style="color: #da3633;">0</div>
+            <div class="stat-label">Threats Detected</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number" style="color: #58a6ff;">ACTIVE</div>
+            <div class="stat-label">System Status</div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Preview</th>
+                <th>Verdict</th>
+                <th>Confidence</th>
+            </tr>
+        </thead>
+        <tbody id="log-table">
+            </tbody>
+    </table>
+
+    <script>
+        function updateDashboard() {
+            fetch('/api/history')
+                .then(response => response.json())
+                .then(data => {
+                    const table = document.getElementById('log-table');
+                    table.innerHTML = ""; // Clear old rows
+                    
+                    let fakeCount = 0;
+                    
+                    // Loop through history backwards (newest first)
+                    data.history.slice().reverse().forEach(entry => {
+                        if (entry.result === "fake") fakeCount++;
+                        
+                        const row = `<tr>
+                            <td>${entry.time}</td>
+                            <td><img src="${entry.url}" class="img-preview"></td>
+                            <td><span class="badge ${entry.result}">${entry.result.toUpperCase()}</span></td>
+                            <td>${(entry.confidence * 100).toFixed(1)}%</td>
+                        </tr>`;
+                        table.innerHTML += row;
+                    });
+
+                    document.getElementById('total-scanned').innerText = data.history.length;
+                    document.getElementById('threats-found').innerText = fakeCount;
+                });
+        }
+
+        // Refresh every 2 seconds
+        setInterval(updateDashboard, 2000);
+        updateDashboard();
+    </script>
+
+</body>
+</html>
