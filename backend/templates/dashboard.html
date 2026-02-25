@@ -1,93 +1,273 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AMD Sentry | Command Center</title>
-    <style>
-        body { background-color: #0d1117; color: #c9d1d9; font-family: 'Courier New', monospace; padding: 20px; }
-        h1 { color: #58a6ff; text-align: center; border-bottom: 1px solid #30363d; padding-bottom: 10px; }
-        .stats-container { display: flex; justify-content: space-around; margin-bottom: 20px; }
-        .stat-box { background: #161b22; padding: 15px; border-radius: 6px; border: 1px solid #30363d; width: 30%; text-align: center; }
-        .stat-number { font-size: 2em; font-weight: bold; }
-        .stat-label { color: #8b949e; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #30363d; padding: 12px; text-align: left; }
-        th { background-color: #161b22; color: #58a6ff; }
-        tr:nth-child(even) { background-color: #0d1117; }
-        tr:nth-child(odd) { background-color: #161b22; }
-        
-        .badge { padding: 5px 10px; border-radius: 4px; font-weight: bold; }
-        .real { background-color: #238636; color: white; }
-        .fake { background-color: #da3633; color: white; }
-        .img-preview { height: 50px; border-radius: 4px; }
-    </style>
-</head>
-<body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>AMD SENTRY | OPS CENTER</title>
+        <style>
+            :root {
+                --neon-blue: #00f3ff;
+                --neon-red: #ff0055;
+                --bg: #050a10;
+                --panel: #0d1218;
+            }
+            body {
+                background-color: var(--bg);
+                color: #fff;
+                font-family: "Segoe UI", monospace;
+                margin: 0;
+                padding: 20px;
+                overflow: hidden;
+            }
 
-    <h1>AMD SENTRY /// LIVE THREAT MONITOR</h1>
+            /* Layout */
+            .container {
+                display: grid;
+                grid-template-columns: 250px 1fr;
+                gap: 20px;
+                height: 95vh;
+            }
+            .sidebar {
+                background: var(--panel);
+                border-right: 2px solid #333;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+            }
+            .main-feed {
+                background: var(--panel);
+                border: 1px solid #333;
+                border-radius: 10px;
+                padding: 20px;
+                overflow-y: auto;
+                position: relative;
+            }
 
-    <div class="stats-container">
-        <div class="stat-box">
-            <div id="total-scanned" class="stat-number">0</div>
-            <div class="stat-label">Images Scanned</div>
+            /* Typography */
+            h1 {
+                color: var(--neon-blue);
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                font-size: 1.5rem;
+                margin-top: 0;
+                text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+            }
+            .stat-label {
+                color: #888;
+                font-size: 0.8rem;
+                margin-top: 15px;
+            }
+            .stat-val {
+                font-size: 2.5rem;
+                font-weight: bold;
+            }
+            .red {
+                color: var(--neon-red);
+                text-shadow: 0 0 15px rgba(255, 0, 85, 0.5);
+            }
+            .blue {
+                color: var(--neon-blue);
+            }
+
+            /* Live Feed Table */
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 10px;
+            }
+            th {
+                text-align: left;
+                color: #555;
+                padding-bottom: 10px;
+                border-bottom: 1px solid #333;
+            }
+            td {
+                padding: 12px 5px;
+                border-bottom: 1px solid #222;
+                font-size: 0.9rem;
+            }
+
+            .badge {
+                padding: 4px 8px;
+                border-radius: 3px;
+                font-weight: bold;
+                font-size: 0.8rem;
+                text-transform: uppercase;
+            }
+            .badge.fake {
+                background: rgba(255, 0, 85, 0.2);
+                color: var(--neon-red);
+                border: 1px solid var(--neon-red);
+            }
+            .badge.real {
+                background: rgba(0, 243, 255, 0.1);
+                color: var(--neon-blue);
+                border: 1px solid var(--neon-blue);
+            }
+
+            .preview-img {
+                width: 40px;
+                height: 40px;
+                object-fit: cover;
+                border-radius: 4px;
+                border: 1px solid #444;
+                transition: transform 0.2s;
+            }
+            .preview-img:hover {
+                transform: scale(3);
+                border-color: #fff;
+                z-index: 100;
+                position: relative;
+            }
+
+            /* Animations */
+            @keyframes pulse {
+                0% {
+                    opacity: 0.5;
+                }
+                50% {
+                    opacity: 1;
+                }
+                100% {
+                    opacity: 0.5;
+                }
+            }
+            .status-dot {
+                height: 10px;
+                width: 10px;
+                background-color: #00ff00;
+                border-radius: 50%;
+                display: inline-block;
+                box-shadow: 0 0 10px #00ff00;
+                animation: pulse 2s infinite;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="sidebar">
+                <h1>
+                    AMD Sentry
+                    <span style="font-size: 0.5em; vertical-align: super"
+                        >v2.0</span
+                    >
+                </h1>
+
+                <div style="margin-bottom: 30px">
+                    <div class="status-dot"></div>
+                    <span
+                        style="
+                            color: #00ff00;
+                            font-weight: bold;
+                            margin-left: 5px;
+                        "
+                        >SYSTEM ONLINE</span
+                    >
+                </div>
+
+                <div class="stat-label">IMAGES SCANNED</div>
+                <div id="total-scanned" class="stat-val blue">0</div>
+
+                <div class="stat-label">THREATS DETECTED</div>
+                <div id="threats-found" class="stat-val red">0</div>
+
+                <div class="stat-label" style="margin-top: auto">
+                    NPU STATUS
+                </div>
+                <div style="color: #666">Simulated (CPU)</div>
+            </div>
+
+            <div class="main-feed">
+                <h3
+                    style="
+                        margin: 0;
+                        color: #fff;
+                        border-bottom: 1px solid #333;
+                        padding-bottom: 10px;
+                    "
+                >
+                    LIVE INTERCEPTION LOG
+                </h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>TIME</th>
+                            <th>TARGET</th>
+                            <th>VERDICT</th>
+                            <th>CONFIDENCE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-table"></tbody>
+                </table>
+            </div>
         </div>
-        <div class="stat-box">
-            <div id="threats-found" class="stat-number" style="color: #da3633;">0</div>
-            <div class="stat-label">Threats Detected</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-number" style="color: #58a6ff;">ACTIVE</div>
-            <div class="stat-label">System Status</div>
-        </div>
-    </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Time</th>
-                <th>Preview</th>
-                <th>Verdict</th>
-                <th>Confidence</th>
-            </tr>
-        </thead>
-        <tbody id="log-table">
-            </tbody>
-    </table>
+        <script>
+            let lastCount = 0;
 
-    <script>
-        function updateDashboard() {
-            fetch('/api/history')
-                .then(response => response.json())
-                .then(data => {
-                    const table = document.getElementById('log-table');
-                    table.innerHTML = ""; // Clear old rows
-                    
-                    let fakeCount = 0;
-                    
-                    // Loop through history backwards (newest first)
-                    data.history.slice().reverse().forEach(entry => {
-                        if (entry.result === "fake") fakeCount++;
-                        
-                        const row = `<tr>
-                            <td>${entry.time}</td>
-                            <td><img src="${entry.url}" class="img-preview"></td>
-                            <td><span class="badge ${entry.result}">${entry.result.toUpperCase()}</span></td>
-                            <td>${(entry.confidence * 100).toFixed(1)}%</td>
-                        </tr>`;
-                        table.innerHTML += row;
+            function updateDashboard() {
+                fetch("/api/history")
+                    .then((response) => response.json())
+                    .then((data) => {
+                        const table = document.getElementById("log-table");
+                        const history = data.history;
+
+                        // Only update if there's new data to avoid flickering
+                        if (history.length === lastCount) return;
+                        lastCount = history.length;
+
+                        table.innerHTML = "";
+                        let fakeCount = 0;
+
+                        // Show newest first
+                        history
+                            .slice()
+                            .reverse()
+                            .forEach((entry) => {
+                                if (entry.result === "fake") fakeCount++;
+
+                                const tr = document.createElement("tr");
+
+                                const tdTime = document.createElement("td");
+                                tdTime.style.color = "#666";
+                                tdTime.style.fontFamily = "monospace";
+                                tdTime.textContent = entry.time;
+                                tr.appendChild(tdTime);
+
+                                const tdImg = document.createElement("td");
+                                const img = document.createElement("img");
+                                img.src = entry.url;
+                                img.className = "preview-img";
+                                tdImg.appendChild(img);
+                                tr.appendChild(tdImg);
+
+                                const tdBadge = document.createElement("td");
+                                const span = document.createElement("span");
+                                span.className = `badge ${entry.result}`;
+                                span.textContent = entry.result;
+                                tdBadge.appendChild(span);
+                                tr.appendChild(tdBadge);
+
+                                const tdConf = document.createElement("td");
+                                tdConf.style.color =
+                                    entry.result === "fake"
+                                        ? "#ff0055"
+                                        : "#fff";
+                                tdConf.textContent = `${(entry.confidence * 100).toFixed(1)}%`;
+                                tr.appendChild(tdConf);
+
+                                table.appendChild(tr);
+                            });
+
+                        document.getElementById("total-scanned").innerText =
+                            history.length;
+                        document.getElementById("threats-found").innerText =
+                            fakeCount;
                     });
+            }
 
-                    document.getElementById('total-scanned').innerText = data.history.length;
-                    document.getElementById('threats-found').innerText = fakeCount;
-                });
-        }
-
-        // Refresh every 2 seconds
-        setInterval(updateDashboard, 2000);
-        updateDashboard();
-    </script>
-
-</body>
+            setInterval(updateDashboard, 1000);
+            updateDashboard();
+        </script>
+    </body>
 </html>
